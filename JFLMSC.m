@@ -1,7 +1,4 @@
-function [Z,M,J,F,E,obj] = JFLMSC(X,F_ini,Z_ini,lambda1,lambda2,lambda3,max_iter,rho,miu,Ctg)
-% If you find the code is useful, please cite the following reference:
-% Simultaneously Learning Feature-wise Weights and Local Structures for Multi-view Subspace Clustering 
-% KnowledgeBased Systems, 2020.
+function [Z,M,J,F,E,obj] = JAGLRR(X,F_ini,Z_ini,lambda1,lambda2,lambda3,max_iter,rho,miu,Ctg)
 max_miu = 1e8;
 Obj = zeros(1,max_iter);
 
@@ -31,7 +28,7 @@ for iter = 1:max_iter
     Z = Ctg*(X'*(X-E+C1/miu)+2*lambda1*S+M+J-(C2+C3)/miu);
     Z = Z- diag(diag(Z));
     % -------- Update M --------- %
-    distF = L2_distance_1(F',F');            % ¼ÆËãvij
+    distF = L2_distance_1(F',F');           
     distX = L2_distance_1(dwf*X,dwf*X);
 %     dist  = distX+lambda1*distF;
     M    = Z+(C2-distX)/miu;
@@ -41,68 +38,12 @@ for iter = 1:max_iter
         idx(ic) = [];
         M(ic,idx) = EProjSimplex_new(M(ic,idx));          % 
     end
-    % -------- Update w --------- %
-    A0 = (M+M')/2;
-    D0 = diag(sum(A0));
-    L0 = D0 - A0;
-    dw = diag(X*L0*X');
-    tdw = dw.^-1;
-    dwf = sparse(1:size(X,1),1:size(X,1),(dw * sum(tdw)).^-1);
+    
     % -------- Update J --------- %
       
     
      temp = Z+C3/miu;
-%     [UH,sigmaH,VH] = svd(temp,'econ');
-%     UH(isnan(UH)) = 0;
-%     VH(isnan(VH)) = 0;
-%     sigmaH(isnan(sigmaH)) = 0;
-%     sigmaH = diag(sigmaH);
-%     SVP = length(find(sigmaH>lambda2/miu));
-%     if SVP >= 1
-%         sigmaH = sigmaH(1:SVP)-lambda2/miu;
-%     else
-%         SVP = 1;
-%         sigmaH = 0;
-%     end
-%     U = UH(:,1:SVP)*diag(sigmaH)*VH(:,1:SVP)';
-        [UH,sigmaH,VH] = svd(temp,'econ');
-        SU = sigmaH;
-        canshu = lambda2;
-        mu = miu;
-        for time=1:size(sigmaH,1)
-         if sum(diag(sigmaH(1:time,1:time)))>canshu/mu
-            if time<size(sigmaH,1)
-                if ((sum(diag(sigmaH(1:time,1:time)))-canshu/mu)/time)>=sigmaH(time+1,time+1)
-                    tsigma=(sum(diag(sigmaH(1:time,1:time)))-canshu/mu)/time;
-                    break
-                end
-            else
-                tsigma=(sum(diag(sigmaH(1:time,1:time)))-canshu/mu)/time;
-            end
-         else
-            if time==size(sigmaH,1)
-                tsigma=0;
-            end
-         end
-        end
-    
-       for cba=1:time
-        sigmaH(cba,cba)=tsigma;
-       end
-       J = UH*sigmaH*VH';
-    % ------- Update E ---------- %
-%     temp1 = X-X*Z+C1/miu;
-%     temp2 = lambda3/miu;
-%     E = max(0,temp1-temp2) + min(0,temp1+temp2);    
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%E NORM21
-    P = X-X*Z+C1/miu;
-     for i=1:1:m
-       if (lambda3/miu)<norm(P(i,:),2) 
-         E(i,:)= ((norm(P(i,:),2)-lambda2/mu)/norm(P(i,:),2))*P(i,:);
-       else
-         E(i,:)=0;
-       end
      end
     % -------- Update C1 C2 C3 miu -------- %
     L1 = X-X*Z-E;
